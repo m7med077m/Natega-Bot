@@ -1,3 +1,4 @@
 pandas
 pyrogram
 tgcrypto
+openpyxl
