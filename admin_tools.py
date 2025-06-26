@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from datetime import datetime
 import pandas as pd
+from io import StringIO
 
 def setup_admin_tools(bot_instance):
     app = bot_instance.app
@@ -135,51 +136,50 @@ def setup_admin_tools(bot_instance):
             pass
 
     # /find <part of name>
-@app.on_message(filters.command("find"))
-async def find_student_command(client: Client, message: Message):
-    if message.from_user.id not in admin_list:
-        await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
-        return
-
-    parts = message.text.strip().split(maxsplit=1)
-    if len(parts) != 2:
-        await message.reply("❗ الاستخدام الصحيح:\n/find <جزء من اسم الطالب أو الاسم كامل>")
-        return
-
-    search_terms = parts[1].lower().split()
-    matches = []
-
-    try:
-        df = pd.read_excel("result.xlsx", sheet_name="Sheet1")
-        df.columns = df.columns.str.strip()
-        df.rename(columns={"ID": "id", "اسم الطالب": "Name"}, inplace=True)
-        df["id"] = df["id"].astype(str).str.strip().str.replace(".0", "", regex=False)
-        df["Name"] = df["Name"].astype(str)
-
-        for _, row in df.iterrows():
-            name = row["Name"].lower()
-            if all(term in name for term in search_terms):
-                matches.append(f"👤 {row['Name']} — 🆔 `{row['id']}`")
-
-        if not matches:
-            await message.reply("❌ لا يوجد نتائج لهذا البحث.")
+    @app.on_message(filters.command("find"))
+    async def find_student_command(client: Client, message: Message):
+        if message.from_user.id not in admin_list:
+            await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
             return
 
-        # تقسيم النتائج على دفعات
-        max_batch_size = 20
-        total = len(matches)
-        for i in range(0, total, max_batch_size):
-            batch = matches[i:i + max_batch_size]
-            text = "🔍 **نتائج البحث:**\n\n" + "\n".join(batch)
-            text += f"\n\n📄 {i + 1} - {min(i + max_batch_size, total)} من {total}"
-            await message.reply(text)
+        parts = message.text.strip().split(maxsplit=1)
+        if len(parts) != 2:
+            await message.reply("❗ الاستخدام الصحيح:\n/find <جزء من اسم الطالب أو الاسم كامل>")
+            return
 
-        # لو أكتر من 50 نتيجة ➤ ابعت ملف
-        if total > 50:
-            from io import StringIO
-            file = StringIO("\n".join(matches))
-            file.name = "search_results.txt"
-            await message.reply_document(file, caption="📄 جميع نتائج البحث كاملة (ملف)")
+        search_terms = parts[1].lower().split()
+        matches = []
 
-    except Exception as e:
-        await message.reply(f"❌ حصل خطأ أثناء البحث: {str(e)}")
+        try:
+            df = pd.read_excel("result.xlsx", sheet_name="Sheet1")
+            df.columns = df.columns.str.strip()
+            df.rename(columns={"ID": "id", "اسم الطالب": "Name"}, inplace=True)
+            df["id"] = df["id"].astype(str).str.strip().str.replace(".0", "", regex=False)
+            df["Name"] = df["Name"].astype(str)
+
+            for _, row in df.iterrows():
+                name = row["Name"].lower()
+                if all(term in name for term in search_terms):
+                    matches.append(f"👤 {row['Name']} — 🆔 `{row['id']}`")
+
+            if not matches:
+                await message.reply("❌ لا يوجد نتائج لهذا البحث.")
+                return
+
+            # تقسيم النتائج على دفعات
+            max_batch_size = 20
+            total = len(matches)
+            for i in range(0, total, max_batch_size):
+                batch = matches[i:i + max_batch_size]
+                text = "🔍 **نتائج البحث:**\n\n" + "\n".join(batch)
+                text += f"\n\n📄 {i + 1} - {min(i + max_batch_size, total)} من {total}"
+                await message.reply(text)
+
+            # لو أكتر من 50 نتيجة ➤ ابعت ملف
+            if total > 50:
+                file = StringIO("\n".join(matches))
+                file.name = "search_results.txt"
+                await message.reply_document(file, caption="📄 جميع نتائج البحث كاملة (ملف)")
+
+        except Exception as e:
+            await message.reply(f"❌ حصل خطأ أثناء البحث: {str(e)}")
