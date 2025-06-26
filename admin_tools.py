@@ -1,6 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from datetime import datetime
+import pandas as pd
 
 def setup_admin_tools(bot_instance):
     app = bot_instance.app
@@ -56,8 +57,43 @@ def setup_admin_tools(bot_instance):
 
         await message.reply(text)
 
-    # /unlink
-       @app.on_message(filters.command("unlinkid"))
+    # /unlink <telegram_id>
+    @app.on_message(filters.command("unlink"))
+    async def unlink_command(client: Client, message: Message):
+        if message.from_user.id not in admin_list:
+            await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
+            return
+
+        parts = message.text.strip().split()
+        if len(parts) != 2 or not parts[1].isdigit():
+            await message.reply("❗ الاستخدام الصحيح:\n/unlink <telegram_user_id>")
+            return
+
+        target_id = parts[1]
+        if target_id not in user_student_map:
+            await message.reply("❌ لا يوجد حساب مرتبط بهذا ID.")
+            return
+
+        student_id = user_student_map.pop(target_id)
+        bot_instance.save_state()
+
+        await message.reply(
+            f"✅ تم فك الربط بين:\n"
+            f"👤 Telegram ID: `{target_id}`\n"
+            f"🎓 Student ID: `{student_id}`"
+        )
+
+        try:
+            await app.send_message(
+                int(target_id),
+                "⚠️ تم فك ربط حسابك برقم الطالب الخاص بك بواسطة الإدارة.\n"
+                "إذا كنت تريد ربطه مرة أخرى، أرسل كود الطالب من جديد."
+            )
+        except:
+            pass
+
+    # /unlinkid <student_id>
+    @app.on_message(filters.command("unlinkid"))
     async def unlinkid_command(client: Client, message: Message):
         if message.from_user.id not in admin_list:
             await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
@@ -97,3 +133,40 @@ def setup_admin_tools(bot_instance):
             )
         except:
             pass
+
+    # /find <part of name>
+    @app.on_message(filters.command("find"))
+    async def find_student_command(client: Client, message: Message):
+        if message.from_user.id not in admin_list:
+            await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
+            return
+
+        parts = message.text.strip().split(maxsplit=1)
+        if len(parts) != 2:
+            await message.reply("❗ الاستخدام الصحيح:\n/find <جزء من اسم الطالب>")
+            return
+
+        search_term = parts[1].strip().lower()
+        matches = []
+
+        try:
+            df = pd.read_excel("result.xlsx", sheet_name="Sheet1")
+            df.columns = df.columns.str.strip()
+            df.rename(columns={"ID": "id", "اسم الطالب": "Name"}, inplace=True)
+            df["id"] = df["id"].astype(str).str.strip().str.replace(".0", "", regex=False)
+            df["Name"] = df["Name"].astype(str)
+
+            for _, row in df.iterrows():
+                if search_term in row["Name"].lower():
+                    matches.append(f"👤 {row['Name']} — 🆔 `{row['id']}`")
+
+            if not matches:
+                await message.reply("❌ لا يوجد نتائج لهذا البحث.")
+            else:
+                reply = "🔍 **النتائج المطابقة:**\n\n" + "\n".join(matches[:20])
+                if len(matches) > 20:
+                    reply += f"\n\n🔽 تم عرض أول 20 فقط من {len(matches)} نتيجة."
+                await message.reply(reply)
+
+        except Exception as e:
+            await message.reply(f"❌ حصل خطأ أثناء البحث: {str(e)}")
