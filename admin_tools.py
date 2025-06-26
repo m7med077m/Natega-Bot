@@ -58,7 +58,7 @@ def setup_admin_tools(bot_instance):
         await message.reply(text)
 
     # /unlink <telegram_id>
-    @app.on_message(filters.command("unlink"))
+    @app.on_message(filters.command("unlinktg"))
     async def unlink_command(client: Client, message: Message):
         if message.from_user.id not in admin_list:
             await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
@@ -93,7 +93,7 @@ def setup_admin_tools(bot_instance):
             pass
 
     # /unlinkid <student_id>
-    @app.on_message(filters.command("unlinkid"))
+    @app.on_message(filters.command("unlink"))
     async def unlinkid_command(client: Client, message: Message):
         if message.from_user.id not in admin_list:
             await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
