@@ -163,8 +163,8 @@ def setup_admin_tools(bot_instance):
             if not matches:
                 await message.reply("❌ لا يوجد نتائج لهذا البحث.")
             else:
-                reply = "🔍 **النتائج المطابقة:**\n\n" + "\n".join(matches[:20])
-                if len(matches) > 20:
+                reply = "🔍 **النتائج المطابقة:**\n\n" + "\n".join(matches[:100])
+                if len(matches) > 100:
                     reply += f"\n\n🔽 تم عرض أول 20 فقط من {len(matches)} نتيجة."
                 await message.reply(reply)
 
