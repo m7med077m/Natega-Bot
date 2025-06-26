@@ -5,6 +5,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from typing import Optional
 from datetime import datetime
+from admin_tools import setup_admin_tools
 
 # Bot credentials
 API_ID = "17058698"
@@ -37,6 +38,7 @@ class StudentResultBot:
         self.admin_list = load_json(ADMIN_LIST_FILE, [INITIAL_ADMIN_ID])
         self.student_usage = load_json(STUDENT_USAGE_FILE, {})
         self.setup_handlers()
+        setup_admin_tools(self)
 
     def save_state(self):
         save_json(USER_STUDENT_MAP_FILE, self.user_student_map)
