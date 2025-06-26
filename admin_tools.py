@@ -48,7 +48,7 @@ def setup_admin_tools(bot_instance):
         text = f"📊 **إحصائيات النظام:**\n\n"
         text += f"👥 عدد المستخدمين المرتبطين: `{total_users}`\n"
         text += f"📥 عدد مرات الاستعلام الكلي: `{total_lookups}`\n"
-        text += f"\n🏆 **أكثر الطلاب تم البحث عنهم:**\n"
+        text += "\n🏆 **أكثر الطلاب تم البحث عنهم:**\n"
 
         for sid, info in top_users:
             count = info.get("count", 0)
@@ -57,16 +57,16 @@ def setup_admin_tools(bot_instance):
 
         await message.reply(text)
 
-    # /unlink <telegram_id>
+    # /unlinktg <telegram_id>
     @app.on_message(filters.command("unlinktg"))
-    async def unlink_command(client: Client, message: Message):
+    async def unlink_by_telegram_id(client: Client, message: Message):
         if message.from_user.id not in admin_list:
             await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
             return
 
         parts = message.text.strip().split()
         if len(parts) != 2 or not parts[1].isdigit():
-            await message.reply("❗ الاستخدام الصحيح:\n/unlink <telegram_user_id>")
+            await message.reply("❗ الاستخدام الصحيح:\n/unlinktg <telegram_user_id>")
             return
 
         target_id = parts[1]
@@ -92,16 +92,16 @@ def setup_admin_tools(bot_instance):
         except:
             pass
 
-    # /unlinkid <student_id>
+    # /unlink <student_id>
     @app.on_message(filters.command("unlink"))
-    async def unlinkid_command(client: Client, message: Message):
+    async def unlink_by_student_id(client: Client, message: Message):
         if message.from_user.id not in admin_list:
             await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
             return
 
         parts = message.text.strip().split()
         if len(parts) != 2:
-            await message.reply("❗ الاستخدام الصحيح:\n/unlinkid <student_id>")
+            await message.reply("❗ الاستخدام الصحيح:\n/unlink <student_id>")
             return
 
         target_student_id = parts[1]
@@ -143,10 +143,10 @@ def setup_admin_tools(bot_instance):
 
         parts = message.text.strip().split(maxsplit=1)
         if len(parts) != 2:
-            await message.reply("❗ الاستخدام الصحيح:\n/find <جزء من اسم الطالب>")
+            await message.reply("❗ الاستخدام الصحيح:\n/find <جزء من اسم الطالب أو الاسم كامل>")
             return
 
-        search_term = parts[1].strip().lower()
+        search_terms = parts[1].lower().split()
         matches = []
 
         try:
@@ -157,15 +157,18 @@ def setup_admin_tools(bot_instance):
             df["Name"] = df["Name"].astype(str)
 
             for _, row in df.iterrows():
-                if search_term in row["Name"].lower():
+                name = row["Name"].lower()
+                if all(term in name for term in search_terms):
                     matches.append(f"👤 {row['Name']} — 🆔 `{row['id']}`")
 
+            max_results = 100
             if not matches:
                 await message.reply("❌ لا يوجد نتائج لهذا البحث.")
             else:
-                reply = "🔍 **النتائج المطابقة:**\n\n" + "\n".join(matches[:100])
-                if len(matches) > 100:
-                    reply += f"\n\n🔽 تم عرض أول 20 فقط من {len(matches)} نتيجة."
+                limited_matches = matches[:max_results]
+                reply = "🔍 **النتائج المطابقة:**\n\n" + "\n".join(limited_matches)
+                if len(matches) > max_results:
+                    reply += f"\n\n🔽 تم عرض أول {max_results} فقط من {len(matches)} نتيجة."
                 await message.reply(reply)
 
         except Exception as e:
