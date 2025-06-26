@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from datetime import datetime
 import pandas as pd
-from io import StringIO
+from io import BytesIO
 
 def setup_admin_tools(bot_instance):
     app = bot_instance.app
@@ -177,7 +177,7 @@ def setup_admin_tools(bot_instance):
 
             # لو أكتر من 50 نتيجة ➤ ابعت ملف
             if total > 50:
-                file = StringIO("\n".join(matches))
+                file = BytesIO("\n".join(matches).encode("utf-8"))
                 file.name = "search_results.txt"
                 await message.reply_document(file, caption="📄 جميع نتائج البحث كاملة (ملف)")
 
