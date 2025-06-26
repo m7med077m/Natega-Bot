@@ -143,8 +143,10 @@ class StudentResultBot:
                 "As an admin, you can:\n"
                 "🔹 Use `/admin <user_id>` to promote others\n"
                 "🔹 Use `/who <user_id>` to know who got the result\n"
-                "🔹 Use `/remove <user_id>` to remove others\n"
+                "🔹 Use `/remove <user_id>` to remove others admin ""owner only ""\n"
+                "🔹 Use `/unlink <student_id>` or `/unlinktg <telegram_id>` to unlink accounts\n"
                 "🔹 Access any student's result using their ID\n"
+                "🔹 some other hidden features dont ask about it 😉\n"
                 "🔹 Help users in case of ID conflicts\n\n"
                 "🛠 Contact @Mos3ad_Kamal or @M7MED1573 if you need assistance."
             )
