@@ -57,36 +57,43 @@ def setup_admin_tools(bot_instance):
         await message.reply(text)
 
     # /unlink
-    @app.on_message(filters.command("unlink"))
-    async def unlink_command(client: Client, message: Message):
+       @app.on_message(filters.command("unlinkid"))
+    async def unlinkid_command(client: Client, message: Message):
         if message.from_user.id not in admin_list:
             await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
             return
 
         parts = message.text.strip().split()
-        if len(parts) != 2 or not parts[1].isdigit():
-            await message.reply("❗ الاستخدام الصحيح:\n/unlink <telegram_user_id>")
+        if len(parts) != 2:
+            await message.reply("❗ الاستخدام الصحيح:\n/unlinkid <student_id>")
             return
 
-        target_id = parts[1]
-        if target_id not in user_student_map:
-            await message.reply("❌ لا يوجد حساب مرتبط بهذا ID.")
+        target_student_id = parts[1]
+        linked_user_id = None
+
+        for uid, sid in user_student_map.items():
+            if sid == target_student_id:
+                linked_user_id = uid
+                break
+
+        if not linked_user_id:
+            await message.reply("❌ لا يوجد مستخدم مرتبط بهذا رقم الطالب.")
             return
 
-        student_id = user_student_map.pop(target_id)
+        user_student_map.pop(linked_user_id)
         bot_instance.save_state()
 
         await message.reply(
             f"✅ تم فك الربط بين:\n"
-            f"👤 Telegram ID: `{target_id}`\n"
-            f"🎓 Student ID: `{student_id}`"
+            f"🎓 Student ID: `{target_student_id}`\n"
+            f"👤 Telegram ID: `{linked_user_id}`"
         )
 
         try:
             await app.send_message(
-                int(target_id),
-                "⚠️ تم فك ربط حسابك برقم الطالب الخاص بك بواسطة الإدارة.\n"
-                "إذا كنت تريد ربطه مرة أخرى، أرسل كود الطالب من جديد."
+                int(linked_user_id),
+                "⚠️ تم فك ربط رقم الطالب الخاص بك بواسطة الإدارة.\n"
+                "إذا كنت تريد ربطه مرة أخرى، أرسل الكود من جديد."
             )
         except:
             pass
