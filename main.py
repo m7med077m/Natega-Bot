@@ -6,11 +6,14 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from typing import Optional
 from datetime import datetime
 from admin_tools import setup_admin_tools
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Bot credentials
-API_ID = "17058698"
-API_HASH = "088f8d5bf0b4b5c0536b039bb6bdf1d2"
-BOT_TOKEN = "7937184826:AAHLAbXTd9dDWrO-Bhs5XZbcv0NTaBs_nMc"
+API_ID = os.getenv("API_ID")
+API_HASH = os.getenv("API_HASH")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # File paths
 EXCEL_FILE = 'result.xlsx'
