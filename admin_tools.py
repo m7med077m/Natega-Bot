@@ -36,6 +36,10 @@ def setup_admin_tools(bot_instance):
         await message.reply(f"✅ تم الإرسال لـ {sent} مستخدم.\n❌ فشل الإرسال لـ {failed}.")
 
     # /stats
+    # /stats
+    # /stats
+    # /stats
+    # /stats
     @app.on_message(filters.command("stats"))
     async def stats_command(client: Client, message: Message):
         if message.from_user.id not in admin_list:
@@ -56,7 +60,54 @@ def setup_admin_tools(bot_instance):
             name = (await get_student_info_by_id(sid)).get("name", "—")
             text += f"🔹 {name} (ID: `{sid}`) ➤ {count} مره\n"
 
+        # حساب محاولات غير مصرح بها (حتى لو تم منعهم من الوصول للنتائج)
+        abuse_attempts = {}
+
+        for student_id, info in student_usage.items():
+            for uid_raw, count in info.get("by", {}).items():
+                uid = str(uid_raw)
+                student_id = str(student_id)
+                linked_student_id = user_student_map.get(uid)
+
+                # لو المستخدم مرتبط بطالب آخر أو مش مرتبط نهائيًا
+                if linked_student_id != student_id:
+                    abuse_attempts[uid] = abuse_attempts.get(uid, 0) + count
+
+        # الترتيب حسب عدد المحاولات
+        offenders = sorted(abuse_attempts.items(), key=lambda x: x[1], reverse=True)
+
         await message.reply(text)
+
+        if offenders:
+            offenders_to_show = []
+            for uid, tries in offenders:
+                if tries < 5:
+                    continue  # تجاهل المحاولات القليلة
+                try:
+                    user = await client.get_users(int(uid))
+                    username = f"@{user.username}" if user.username else f"{user.first_name} {user.last_name or ''}".strip()
+                except:
+                    username = "مستخدم غير معروف"
+                offenders_to_show.append(f"🔸 {username} (`{uid}`) ➤ {tries} محاوله")
+
+            if offenders_to_show:
+                max_batch_size = 20
+                total = len(offenders_to_show)
+                for i in range(0, total, max_batch_size):
+                    batch = offenders_to_show[i:i + max_batch_size]
+                    batch_text = "\n".join(batch)
+                    batch_text += f"\n\n📄 {i + 1} - {min(i + max_batch_size, total)} من {total}"
+                    if i == 0:
+                        batch_text = "🚨 مستخدمين حاولوا الوصول لنتائج طلاب آخرين:\n" + batch_text
+                    await message.reply(batch_text)
+                if total > max_batch_size:
+                    from io import BytesIO
+                    file = BytesIO("\n".join(offenders_to_show).encode("utf-8"))
+                    file.name = "offenders_list.txt"
+                    await message.reply_document(file, caption="📄 جميع محاولات التجاوز كاملة (ملف)")
+        else:
+            pass  # لا ترسل أي نص إضافي إذا لم يوجد مخالفون
+
 
     # /unlinktg <telegram_id>
     @app.on_message(filters.command("unlinktg"))
@@ -183,3 +234,27 @@ def setup_admin_tools(bot_instance):
 
         except Exception as e:
             await message.reply(f"❌ حصل خطأ أثناء البحث: {str(e)}")
+
+    # /reset
+    @app.on_message(filters.command("reset"))
+    async def reset_command(client: Client, message: Message):
+        if message.from_user.id not in admin_list:
+            await message.reply("❌ الأمر ده مخصص للإدمن فقط.")
+            return
+
+        parts = message.text.strip().split()
+        if len(parts) != 2:
+            await message.reply("❗ الاستخدام الصحيح:\n/reset <password>")
+            return
+
+        password = parts[1]
+        if password != "19312@Mo":
+            await message.reply("❌ كلمة المرور غير صحيحة.")
+            return
+
+        # Clear the in-memory data
+        user_student_map.clear()
+        student_usage.clear()
+        bot_instance.save_state()
+
+        await message.reply("✅ تم إعادة ضبط قاعدة البيانات بنجاح. يمكنك الآن إضافة نتائج جديدة.")
