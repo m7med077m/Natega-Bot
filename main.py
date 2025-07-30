@@ -79,15 +79,13 @@ class StudentResultBot:
 
     async def handle_start(self, message: Message):
         await message.reply_text(
-            "👋 أهلاً بيك في بوت النتيجة 📚\n\n"
-            "علشان تجيب نتيجتك:\n"
-            "➤ ابعت كود على طول (مثال: 1614120210100000)\n"
-            "➤ أو استخدم الأمر ده: /result رقمك_الجامعي\n\n"
-            "📌 أول ما تبعت رقمك، هنربطه بحسابك تلقائي\n"
-            "ولو حصل أي مشكلة أو رقمك اتربط بحساب تاني:\n"
-            "كلّم الأدمن عشان يساعدك:\n"
-            "📞 @Mos3ad_Kamal أو @M7MED1573"
-        )
+            "👋 <b>أهلاً وسهلاً في بوت النتيجة 📚</b>\n\n"
+            "هنا تقدر تعرف نتيجتك بكل سهولة ✨\n\n"
+            "🔹 <b>علشان تجيب نتيجتك:</b>\n"
+            " ➤ ابعت <b> رقم الجلوس  مباشرة \n"
+            " ➤ أو استخدم الأمر: <code>/result رقم الجلوس \n\n"
+            "🔐 أول ما تبعت الكود، هنربطه بحسابك تلقائيًا."
+       )
     async def get_student_info_by_id(self, student_id: str) -> dict:
         try:
             df = pd.read_excel(EXCEL_FILE, sheet_name=SHEET_NAME)
@@ -151,7 +149,7 @@ class StudentResultBot:
                 "🔹 Access any student's result using their ID\n"
                 "🔹 some other hidden features dont ask about it 😉\n"
                 "🔹 Help users in case of ID conflicts\n\n"
-                "🛠 Contact @Mos3ad_Kamal or @M7MED1573 if you need assistance."
+                "🛠 Contact @M7MED1573 if you need assistance."
             )
         except: pass
 
@@ -191,7 +189,7 @@ class StudentResultBot:
         user_id = message.from_user.id
         student_id = self.extract_student_id(message)
         if not student_id:
-            await message.reply_text("❌ Please send a valid student ID.")
+            await message.reply_text("❌ please send me /result رقم الجلوس .\n or just send رقم الجلوس directly.")
             return
 
         if user_id in self.admin_list:
@@ -206,7 +204,8 @@ class StudentResultBot:
             if sid == student_id and uid != str(user_id):
                 await message.reply_text(
                     "❌ **تم استخدام كود الطالب الخاص بك من قِبل شخص آخر.**\n"
-                    "📞 تواصل مع: @Mos3ad_Kamal أو @M7MED1573"
+                    "📞 تواصل مع:\n @youssra_fayed \n @Zahra_3laa \n @El_karadawy \n @Dr_M_ElBaz \n @ElHaWary_M \n @Karimaboraya \n"
+                    "🛠️دعم التقنية : @M7MED1573 "
                 )
                 return
 
@@ -233,7 +232,7 @@ class StudentResultBot:
 
         parts = message.text.split()
         if len(parts) != 2 or not parts[1].isdigit():
-            await message.reply_text("الاستخدام الصحيح:\n/whois <student_id>")
+            await message.reply_text("الاستخدام الصحيح:\n/who <student_id> ")
             return
 
         target_id = parts[1]
@@ -298,9 +297,10 @@ class StudentResultBot:
                 return None
 
             name = row['Name'].iloc[0]
-            obstetrics = row['Obstetrics'].iloc[0]
-            pediatric = row['Pediatric'].iloc[0]
-            git = row['GIT'].iloc[0]
+            Dermatology = row['Dermatology'].iloc[0]
+            ENT = row['ENT'].iloc[0]
+            Family_medicine = row['Family medicine'].iloc[0]
+            Radiology = row['Radiology'].iloc[0]
             total = row['Total'].iloc[0]
             percentage = row['percentage'].iloc[0]
 
@@ -308,14 +308,16 @@ class StudentResultBot:
 🎓 **Student Result**
 ━━━━━━━━━━━━━━━━━━━━━━━
 👤 **Full Name**     : {name}  
-🆔 **Student ID**    : `{student_id}`  
+🆔 **Student ID**    : `{student_id}`
+🗓️ **Semester**      :   **9**  
 
 📚 **Subject Grades:**
 ━━━━━━━━━━━━━━━━━━━━━━━
-🔹 Obstetrics   : {obstetrics}
-🔹 Pediatric    : {pediatric}
-🔹 GIT          : {git}
-🔹 **Total**    : {total}
+🔹 Dermatology : {Dermatology}
+🔹 ENT : {ENT}
+🔹 Family Medicine : {Family_medicine}
+🔹 Radiology : {Radiology}
+🔹 **Total** : {total}
 🔹 **Percentage** : {percentage:.2f}%
 ━━━━━━━━━━━━━━━━━━━━━━━
 🔒 **Privacy Notice:** Your Student ID has been securely linked to your Telegram account to protect your academic data.
