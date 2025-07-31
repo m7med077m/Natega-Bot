@@ -144,11 +144,11 @@ class StudentResultBot:
                 "As an admin, you can:\n"
                 "🔹 Use `/admin <user_id>` to promote others\n"
                 "🔹 Use `/who <user_id>` to know who got the result\n"
-                "🔹 Use `/remove <user_id>` to remove others admin ""owner only ""\n"
                 "🔹 Use `/unlink <student_id>` or `/unlinktg <telegram_id>` to unlink accounts\n"
                 "🔹 Access any student's result using their ID\n"
                 "🔹 some other hidden features dont ask about it 😉\n"
                 "🔹 Help users in case of ID conflicts\n\n"
+                "⚠️ **Note:** Only the owner can remove admins.\n\n"
                 "🛠 Contact @M7MED1573 if you need assistance."
             )
         except: pass
@@ -165,8 +165,15 @@ class StudentResultBot:
             return
 
         target_id = int(parts[1])
-        if target_id == user_id:
-            await message.reply_text("⚠️ You cannot remove yourself.")
+        
+        # Check if trying to remove the owner
+        if target_id == INITIAL_ADMIN_ID:
+            await message.reply_text("❌ The owner cannot be removed by anyone.")
+            return
+        
+        # Only the owner can remove other admins
+        if user_id != INITIAL_ADMIN_ID:
+            await message.reply_text("❌ Only the owner can remove other admins.")
             return
 
         if target_id not in self.admin_list:
@@ -180,7 +187,7 @@ class StudentResultBot:
         try:
             await self.app.send_message(
                 target_id,
-                "**⚠️ You have been removed as an admin by another administrator.**\n"
+                "**⚠️ You have been removed as an admin by the owner.**\n"
                 "If you believe this is a mistake, please contact support."
             )
         except: pass
@@ -195,13 +202,16 @@ class StudentResultBot:
         if user_id in self.admin_list:
             result = await self.get_student_result(student_id)
             if result:
-                self.track_usage(student_id)
+                self.track_usage(student_id, str(user_id))
             await message.reply_text(result or f"❌ No results found for ID: {student_id}")
             return
 
         registered_id = self.user_student_map.get(str(user_id))
         for uid, sid in self.user_student_map.items():
             if sid == student_id and uid != str(user_id):
+                # Track this violation attempt
+                self.track_usage(student_id, str(user_id))
+                self.save_state()
                 await message.reply_text(
                     "❌ **تم استخدام كود الطالب الخاص بك من قِبل شخص آخر.**\n"
                     "📞 تواصل مع:\n @youssra_fayed \n @Zahra_3laa \n @El_karadawy \n @Dr_M_ElBaz \n @ElHaWary_M \n @Karimaboraya \n"
@@ -220,7 +230,7 @@ class StudentResultBot:
             await message.reply_text("❌ You can only access your linked result.")
             return
 
-        self.track_usage(student_id)
+        self.track_usage(student_id, str(user_id))
         self.save_state()
         await message.reply_text(result + "\n\n🔒 ID linked to your account.")
 
@@ -328,10 +338,17 @@ class StudentResultBot:
 
 
 
-    def track_usage(self, student_id: str):
-        usage = self.student_usage.get(student_id, {"count": 0})
+    def track_usage(self, student_id: str, user_id: str = None):
+        usage = self.student_usage.get(student_id, {"count": 0, "by": {}})
         usage["count"] += 1
         usage["last_time"] = datetime.now().isoformat()
+        
+        # Track which user accessed this student ID
+        if user_id:
+            if "by" not in usage:
+                usage["by"] = {}
+            usage["by"][user_id] = usage["by"].get(user_id, 0) + 1
+        
         self.student_usage[student_id] = usage
 
     def run(self):
